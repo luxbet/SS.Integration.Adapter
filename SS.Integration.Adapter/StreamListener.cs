@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SS.Integration.Adapter.Interface;
 using SS.Integration.Adapter.UdapiClient;
@@ -402,6 +403,11 @@ namespace SS.Integration.Adapter
 
                     _Stats.IncrementValue(StreamListenerKeys.UPDATE_PROCESSED);
                     UpdateState(fixtureDelta);
+
+                    if (fixtureDelta.IsMatchStatusChanged && fixtureDelta.IsMatchOver)
+                    {
+                        ProcessMatchOver(fixtureDelta);
+                    }
                 }
                 else
                 {
@@ -440,6 +446,18 @@ namespace SS.Integration.Adapter
             {
                 _isUpdateBeingProcessed = false;
             }
+        }
+
+        private void ProcessMatchOver(Fixture fixtureDelta)
+        {
+            _logger.InfoFormat("{0} is Match Over. Suspending all markets and stopping the stream.",
+                _resource);
+
+            _platformConnector.ProcessFixtureDeletion(fixtureDelta);
+            IsFixtureEnded = true;
+            _marketsFilter.Clear();
+
+            Stop();
         }
 
         public void ResourceOnStreamDisconnected(object sender, EventArgs eventArgs)
@@ -542,38 +560,40 @@ namespace SS.Integration.Adapter
             if (fixtureDelta.IsMatchStatusChanged && !string.IsNullOrEmpty(fixtureDelta.MatchStatus))
             {
                 _logger.InfoFormat("{0} has changed matchStatus={1}", _resource, Enum.Parse(typeof(MatchStatus), fixtureDelta.MatchStatus));
-
                 _platformConnector.ProcessMatchStatus(fixtureDelta);
-
             }
 
-            if ((fixtureDelta.IsMatchStatusChanged && fixtureDelta.IsMatchOver) || fixtureDelta.IsDeleted)
+            if (fixtureDelta.IsDeleted)
             {
-
-                if (fixtureDelta.IsDeleted)
-                {
-                    FixtureDeleted(fixtureDelta);
-                }
-                else  // Match Over
-                {
-                    _logger.InfoFormat("{0} is Match Over. Suspending all markets and stopping the stream.", _resource);
-
-                    SuspendMarkets();
-                    this.RetrieveAndProcessSnapshot(hasEpochChanged);
-                    _platformConnector.ProcessFixtureDeletion(fixtureDelta);
-                    this.IsFixtureEnded = true;
-                    _marketsFilter.Clear();
-                }
+                FixtureDeleted(fixtureDelta);
 
                 Stop();
-
+                return false;
+            }
+       
+            if (ShouldTakeSnapshot(fixtureDelta.LastEpochChangeReason))
+            {
+                SuspendAndReprocessSnapshot(hasEpochChanged);
                 return false;
             }
 
-            SuspendAndReprocessSnapshot(hasEpochChanged);
-
-            return false;
+            return true;
         }
+
+        private bool ShouldTakeSnapshot(int[] epochChanges)
+        {
+            var shouldTakeSnapshot = new int[]
+            {
+                (int) EpochChangeReason.BaseVariables,
+                (int) EpochChangeReason.Created,
+                (int) EpochChangeReason.Definition,
+                (int) EpochChangeReason.FeedSource,
+                (int) EpochChangeReason.Participants
+            };
+
+            return epochChanges.Any(shouldTakeSnapshot.Contains);
+        }
+
 
         private void FixtureDeleted(Fixture fixtureDelta)
         {
