@@ -457,7 +457,7 @@ namespace SS.Integration.Adapter
             if (!_listeners.ContainsKey(resource.Id)) return true;
 
             var listener = _listeners[resource.Id];
-            var maxPeriodWithoutMessage = _settings.EchoInterval * 3;
+            var maxPeriodWithoutMessage = _settings.MaxPeriodWithoutMessage;
 
             // first check for IsErrored as it may have already suspended all markets
             if (listener.IsErrored || !listener.CheckStreamHealth(maxPeriodWithoutMessage, resource.Content != null ? resource.Content.Sequence : -1))

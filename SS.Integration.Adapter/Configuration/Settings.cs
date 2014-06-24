@@ -32,6 +32,7 @@ namespace SS.Integration.Adapter.Configuration
         private const string DEFAULT_EVENT_STATE_FILE_PATH_VALUE = @"C:\eventState.json";
         private const string DEFAULT_MARKET_STATE_MANAGER_DIRECTORY = @"MarketsState";
         private const int DEFAULT_CACHE_EXPIRY_MINUTES_VALUE = 15;
+        private const int DEFAULT_MAX_PERIOD_WITHOUT_MESSAGE = 480000; // 4 minutes
 
 
         public Settings()
@@ -76,6 +77,9 @@ namespace SS.Integration.Adapter.Configuration
 
             value = ConfigurationManager.AppSettings["cacheExpiryInMins"];
             CacheExpiryInMins = string.IsNullOrEmpty(value) ? DEFAULT_CACHE_EXPIRY_MINUTES_VALUE : Convert.ToInt32(value);
+
+            value = ConfigurationManager.AppSettings["maxPeriodWithoutMessage"];
+            MaxPeriodWithoutMessage = string.IsNullOrEmpty(value) ? DEFAULT_MAX_PERIOD_WITHOUT_MESSAGE : Convert.ToInt32(value);
         }
 
         public string MarketFiltersDirectory { get; private set; }
@@ -99,6 +103,8 @@ namespace SS.Integration.Adapter.Configuration
         public int EchoInterval { get; private set; }
 
         public int EchoDelay { get; private set; }
+
+        public int MaxPeriodWithoutMessage { get; private set; }
 
         public bool SuspendAllMarketsOnShutdown { get; private set; }
 

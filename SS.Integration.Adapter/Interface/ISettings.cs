@@ -103,6 +103,8 @@ namespace SS.Integration.Adapter.Interface
         /// (in minutes) for the adapter's cache
         /// </summary>
         int CacheExpiryInMins { get;  }
+
+        int MaxPeriodWithoutMessage { get; }
      
     }
 }
