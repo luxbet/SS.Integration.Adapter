@@ -32,7 +32,7 @@ namespace SS.Integration.Adapter.Configuration
         private const string DEFAULT_EVENT_STATE_FILE_PATH_VALUE = @"C:\eventState.json";
         private const string DEFAULT_MARKET_STATE_MANAGER_DIRECTORY = @"MarketsState";
         private const int DEFAULT_CACHE_EXPIRY_MINUTES_VALUE = 15;
-        private const int DEFAULT_MAX_PERIOD_WITHOUT_MESSAGE = 480000; // 4 minutes
+        private const int DEFAULT_MAX_PERIOD_WITHOUT_MESSAGE = 240000; // 4 minutes
 
 
         public Settings()
