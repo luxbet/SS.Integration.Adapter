@@ -124,7 +124,11 @@ namespace SS.Integration.Adapter.MarketRules
 
             MergeIntents(fixture, tmp);
         }
-
+        
+        public IMarketStateCollection CurrentState
+        {
+            get { return _CurrentTransaction ?? _StateProvider.GetObject(_FixtureId); }
+        }
         /// <summary>
         /// E = Editable , !E = NotEditable
         /// R = Removable, !R = NotRemovable
@@ -288,11 +292,13 @@ namespace SS.Integration.Adapter.MarketRules
         {
             var fixture = new Fixture { Id = _FixtureId, MatchStatus = ((int)MatchStatus.Ready).ToString() };
 
-            if (_CurrentTransaction == null)
+            if (CurrentState == null)
                 return fixture;
 
-            foreach (var mkt_id in _CurrentTransaction.Markets)
-                fixture.Markets.Add(CreateSuspendedMarket(_CurrentTransaction[mkt_id]));
+            foreach (var mkt_id in CurrentState.Markets)
+            {
+                fixture.Markets.Add(CreateSuspendedMarket(CurrentState[mkt_id]));
+            }
 
             return fixture;
         }
