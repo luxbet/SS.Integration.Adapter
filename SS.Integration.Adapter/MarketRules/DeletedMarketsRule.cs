@@ -27,7 +27,8 @@ namespace SS.Integration.Adapter.MarketRules
 
         public IMarketRuleResultIntent Apply(Fixture fixture, IMarketStateCollection oldState,
             IMarketStateCollection newState)
-        {
+        {            
+
             var result = new MarketRuleResultIntent();
 
             if (oldState == null)
@@ -44,12 +45,11 @@ namespace SS.Integration.Adapter.MarketRules
             {
                 newDeletedMarketState.ForEach(m =>
                 {
-                    _logger.InfoFormat("Market {0} was deleted from {1} and it will be suspended", m, fixture);
+                    _logger.DebugFormat("market rule={0} => {1} of {2} was deleted from the Connect platform - it will be suspended", Name, m, fixture);
                     result.AddMarket(m);
                 });
             }
-
-
+            
             return result;
 
         }

@@ -380,12 +380,12 @@ namespace SS.Integration.Adapter
 
         private void ProcessResource(string sport, IResourceFacade resource)
         {
-            _logger.InfoFormat("Attempt to process {0} for sport={1}", resource, sport);
+            _logger.DebugFormat("Attempt to process {0} for sport={1}", resource, sport);
 
             if(!CanProcessResource(resource))
                 return;
 
-            _logger.DebugFormat("Processing {0}", resource);
+            _logger.InfoFormat("Processing {0}", resource);
 
             if (_listeners.ContainsKey(resource.Id))
             {
@@ -427,7 +427,7 @@ namespace SS.Integration.Adapter
 
                 _logger.DebugFormat("Adding {0} to the creation queue ", resource);
                 _resourceCreationQueue.Add(resource);
-                _logger.InfoFormat("Added {0} to the creation queue", resource);
+                _logger.DebugFormat("Added {0} to the creation queue", resource);
             }
 
         }
@@ -445,7 +445,7 @@ namespace SS.Integration.Adapter
                         if (_listeners.ContainsKey(resource.Id))
                             continue;
 
-                        _logger.DebugFormat("Attempting to create fixture for sport={0} and {1}", resource.Sport, resource);
+                        _logger.DebugFormat("Attempting to create a Listener for sport={0} and {1}", resource.Sport, resource);
 
                         var listener = new StreamListener(resource, PlatformConnector, EventState, StateManager);
 
@@ -513,12 +513,12 @@ namespace SS.Integration.Adapter
         /// <returns></returns>
         private bool StopListenerIfFixtureEnded(string sport, IResourceFacade resource)
         {
-            _logger.DebugFormat("Checking {0} for stopping streaming", resource);
-
             var listener = _listeners[resource.Id];
 
             if (listener.IsFixtureEnded || resource.IsMatchOver)
             {
+                _logger.DebugFormat("{0} is marked as ended - checking for stopping streaming", resource);
+
                 FixtureState currState = EventState.GetFixtureState(resource.Id);
 
                 if (currState != null && currState.MatchStatus != MatchStatus.MatchOver)
@@ -540,8 +540,6 @@ namespace SS.Integration.Adapter
 
                 return true;
             }
-
-            _logger.DebugFormat("{0} will keep streaming", resource);
 
             return false;
         }

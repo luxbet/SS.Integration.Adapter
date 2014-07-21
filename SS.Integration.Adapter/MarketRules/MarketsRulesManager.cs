@@ -38,14 +38,14 @@ namespace SS.Integration.Adapter.MarketRules
 
         internal MarketRulesManager(string fixtureId, IStoredObjectProvider stateProvider, IEnumerable<IMarketRule> filteringRules)
         {
-            _logger.DebugFormat("Initiating market rule manager for fixtureId={0}", fixtureId);
+            _logger.DebugFormat("Initialising market rule manager for fixtureId={0}", fixtureId);
             
             _fixtureId = fixtureId;
             _rules = filteringRules;
 
             _stateProvider = stateProvider;
 
-            _logger.DebugFormat("Market rule manager initiated successfully for fixtureId={0}", fixtureId);
+            _logger.DebugFormat("Market rule manager initialised successfully for fixtureId={0}", fixtureId);
         }
 
         #region IMarketRulesManager
@@ -55,6 +55,7 @@ namespace SS.Integration.Adapter.MarketRules
             if (_currentTransaction == null)
                 return;
 
+            _logger.DebugFormat("Committing changes made to the market state");
             _stateProvider.SetObject(_fixtureId, _currentTransaction);
             _currentTransaction = null;
         }
@@ -86,14 +87,16 @@ namespace SS.Integration.Adapter.MarketRules
             // comes from a full snapshot, it can have a lot of markets...
             Parallel.ForEach(tmp.Keys.ToList(), options, rule =>
                 {                    
-                    _logger.DebugFormat("Filtering markets with rule={0}", rule.Name);
+                    _logger.DebugFormat("Filtering markets on {1} with rule={0}", rule.Name, fixture);
                     tmp[rule] = rule.Apply(fixture, oldstate, _currentTransaction);
-                    _logger.DebugFormat("Filtering market with rule={0} completed", rule.Name);
+                    _logger.DebugFormat("Filtering markets on {1} with rule={0} completed", rule.Name, fixture);
                 }
             );
 
 
             MergeIntents(fixture, tmp);
+
+            _logger.InfoFormat("Market state update for {0}", fixture);
         }
 
         public IMarketStateCollection CurrentState
@@ -103,6 +106,7 @@ namespace SS.Integration.Adapter.MarketRules
 
         public void RollbackChanges()
         {
+            _logger.DebugFormat("Rolling back changes made to the market state");
             _currentTransaction = null;
         }
 
@@ -115,8 +119,12 @@ namespace SS.Integration.Adapter.MarketRules
             // and then updating it with the new info coming within
             // the snapshot
 
+            bool fullSnapshot = fixture.Tags != null && fixture.Tags.Any();
+
+            _logger.DebugFormat("Creating new market state transaction for {0} - tags will {1}be updated", fixture, (fullSnapshot ? "" : "not "));
+
             var clone = new MarketStateCollection(fixture.Id, oldState);
-            clone.Update(fixture, fixture.Tags != null && fixture.Tags.Any());
+            clone.Update(fixture, fullSnapshot);
                
             _currentTransaction = clone;
         }
