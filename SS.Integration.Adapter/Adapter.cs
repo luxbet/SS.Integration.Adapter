@@ -106,13 +106,14 @@ namespace SS.Integration.Adapter
             {
                 LogVersions();
 
+                _logger.Info("Adapter is connecting to the UDAPI service...");
                 UDAPIService.Connect();
                 if (!UDAPIService.IsConnected)
                     return;
 
                 _Stats.SetValue(AdapterKeys.STATUS, "Connected");
 
-                _logger.Debug("Initialising adapter...");
+                _logger.Debug("Adapter connected to the UDAPI - initialising...");
 
                 for (var i = 0; i < Settings.FixtureCreationConcurrency; i++)
                 {
@@ -303,13 +304,13 @@ namespace SS.Integration.Adapter
             }
             catch { }
 
-            _logger.DebugFormat("Currently adapter is streaming fixtureCount={0}, creation queue is queueSize={1}", currentlyConnected, queueSize);
+            _logger.DebugFormat("Currently adapter is streaming fixtureCount={0} and creation queue has queueSize={1} elements", currentlyConnected, queueSize);
 
         }
 
         internal void ProcessSport(string sport)
         {
-            _logger.DebugFormat("Getting the list of available fixtures for sport={0} from GTP", sport);
+            _logger.InfoFormat("Getting the list of available fixtures for sport={0} from GTP", sport);
 
             var resources = UDAPIService.GetResources(sport);
 
@@ -352,14 +353,14 @@ namespace SS.Integration.Adapter
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(string.Format("Listener couldn't be created for sport={0} and resource={1}", sport, resource.ToString()), ex);
+                        _logger.Error(string.Format("An error occured while processing {0} for sport={1}", resource, sport), ex);
                     }
                 });
             
 
             RemoveDeletedFixtures(sport, resources);
             
-            _logger.DebugFormat("Finished processing sport={0}", sport);
+            _logger.InfoFormat("Finished processing fixtures for sport={0}", sport);
         }
 
         private void RemoveDeletedFixtures(string sport, IEnumerable<IResourceFacade> resources)
@@ -379,25 +380,27 @@ namespace SS.Integration.Adapter
 
         private void ProcessResource(string sport, IResourceFacade resource)
         {
-            _logger.InfoFormat("Processing {0} for sport={1}", resource, sport);
+            _logger.InfoFormat("Attempt to process {0} for sport={1}", resource, sport);
 
             if(!CanProcessResource(resource))
                 return;
 
+            _logger.DebugFormat("Processing {0}", resource);
+
             if (_listeners.ContainsKey(resource.Id))
             {
-                _logger.DebugFormat("StreamListener already exists for {0}", resource);
+                _logger.DebugFormat("Listener already exists for {0}", resource);
 
                 IListener listener = _listeners[resource.Id];
 
                 if (listener.IsFixtureDeleted)
                 {
-                    _logger.DebugFormat("{0} was deleted and republished", resource);
+                    _logger.DebugFormat("{0} was deleted and republished. Listener wil be removed", resource);
                     RemoveAndStopListener(resource.Id);
                 }
                 else if (listener.IsIgnored)
                 {
-                    _logger.DebugFormat("{0} is marked as ignored", resource);
+                    _logger.DebugFormat("{0} is marked as ignored. Listener wil be removed", resource);
                     RemoveAndStopListener(resource.Id);
                 }
                 else
@@ -416,15 +419,15 @@ namespace SS.Integration.Adapter
                 var fixtureState = EventState.GetFixtureState(resource.Id);
                 if (resource.IsMatchOver && (fixtureState == null || fixtureState.MatchStatus == resource.MatchStatus))
                 {
-                    _logger.InfoFormat("{0} has finished. Will not process", resource);
+                    _logger.InfoFormat("{0} is over. Adapter will not process the resource", resource);
                     MarkResourceAsProcessable(resource);
                     return;
                 }
 
 
-                _logger.DebugFormat("Adding {0} to the queue ", resource);
+                _logger.DebugFormat("Adding {0} to the creation queue ", resource);
                 _resourceCreationQueue.Add(resource);
-                _logger.InfoFormat("Added {0} to the queue", resource);
+                _logger.InfoFormat("Added {0} to the creation queue", resource);
             }
 
         }
@@ -437,12 +440,12 @@ namespace SS.Integration.Adapter
                 {
                     try
                     {
-                        _logger.DebugFormat("Read {0} from the queue", resource);
+                        _logger.DebugFormat("Task={0} is processing {1} from the queue", Task.CurrentId, resource);
 
                         if (_listeners.ContainsKey(resource.Id))
                             continue;
 
-                        _logger.InfoFormat("Attempting to create fixture for sport={0} and {1}", resource.Sport, resource);
+                        _logger.DebugFormat("Attempting to create fixture for sport={0} and {1}", resource.Sport, resource);
 
                         var listener = new StreamListener(resource, PlatformConnector, EventState, StateManager);
 
@@ -451,16 +454,18 @@ namespace SS.Integration.Adapter
                         _listeners.TryAdd(resource.Id, listener);
 
                         OnStreamCreated();
+
+                        _logger.InfoFormat("Listener created for {0}", resource);
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(string.Format("There has been a problem creating fixture {0}", resource), ex);
+                        _logger.Error(string.Format("There has been a problem creating a listener for {0}", resource), ex);
                     }
                     finally
                     {
                         MarkResourceAsProcessable(resource);
 
-                        _logger.InfoFormat("Finished processing fixture from queue {0}", resource);
+                        _logger.DebugFormat("Finished processing fixture from queue {0}", resource);
                     }
 
                     if (_creationQueueCancellationToken.IsCancellationRequested)
@@ -483,7 +488,8 @@ namespace SS.Integration.Adapter
 
         private bool RemoveAndStopListener(string fixtureId)
         {
-            _logger.DebugFormat("Removing listener for fixtureId={0}", fixtureId);
+            _logger.InfoFormat("Removing listener for fixtureId={0}", fixtureId);
+            
             IListener listener = null;
             _listeners.TryRemove(fixtureId, out listener);
 
@@ -517,11 +523,11 @@ namespace SS.Integration.Adapter
 
                 if (currState != null && currState.MatchStatus != MatchStatus.MatchOver)
                 {
-                    _logger.InfoFormat("Skipping event state cleanup for {0}", resource);
+                    _logger.DebugFormat("{0} is over but the MatchOver update has not been processed yet", resource);
                     return false;
                 }
 
-                _logger.InfoFormat("{0} is over.", resource);
+                _logger.InfoFormat("{0} is over. Listener will be removed", resource);
                 
                 if (RemoveAndStopListener(resource.Id))
                 {
@@ -565,7 +571,7 @@ namespace SS.Integration.Adapter
             {
                 if (_currentlyProcessedFixtures.Contains(resource.Id))
                 {
-                    _logger.DebugFormat("{0} is currently being processed - skipping it", resource);
+                    _logger.DebugFormat("{0} is currently being processed by another task - ignoring it", resource);
                     return false;
                 }
 
