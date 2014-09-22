@@ -38,7 +38,7 @@ namespace SS.Integration.Adapter
     {
         private readonly static object _sync = new object();
         private readonly ILog _logger = LogManager.GetLogger(typeof(Adapter).ToString());
-        
+
         public event EventHandler StreamCreated;
 
         private readonly ConcurrentDictionary<string, IListener> _listeners;
@@ -57,7 +57,7 @@ namespace SS.Integration.Adapter
             UDAPIService = udapiServiceFacade;
             PlatformConnector = platformConnector;
             EventState = ProcessState.EventState.Create(new FileStoreProvider(), settings);
-            
+
             var statemanager = new StateManager(settings);
             StateManager = statemanager;
 
@@ -77,7 +77,7 @@ namespace SS.Integration.Adapter
             _listeners = new ConcurrentDictionary<string, IListener>();
             _sports = new List<string>();
             _creationQueueCancellationToken = new CancellationTokenSource();
-            
+
             _creationTasks = new Task[settings.FixtureCreationConcurrency];
 
             _Stats = StatsManager.Instance["adapter.core"].GetHandle();
@@ -110,7 +110,7 @@ namespace SS.Integration.Adapter
                 _logger.Info("Adapter is connecting to the UDAPI service...");
                 UDAPIService.Connect();
                 if (!UDAPIService.IsConnected)
-                    return;                
+                    return;
 
                 _logger.Debug("Adapter connected to the UDAPI - initialising...");
 
@@ -121,7 +121,10 @@ namespace SS.Integration.Adapter
 
                 foreach (var sport in UDAPIService.GetSports())
                 {
-                    _sports.Add(sport.Name);
+                    if (Settings.Sports == null || Array.IndexOf(Settings.Sports, sport.Name) > -1)
+                    {
+                        _sports.Add(sport.Name);
+                    }
                 }
 
                 _trigger = new Timer(timerAutoEvent => TimerEvent(), null, 0, Settings.FixtureCheckerFrequency);
@@ -196,7 +199,7 @@ namespace SS.Integration.Adapter
             {
                 _logger.Error("An error occured while disposing the adapter", e);
             }
-            
+
             _Stats.SetValue(AdapterCoreKeys.ADAPTER_STARTED, "0");
             _logger.InfoFormat("Adapter stopped");
         }
@@ -320,13 +323,13 @@ namespace SS.Integration.Adapter
                 _logger.WarnFormat("Cannot find sport={0} in UDAPI....", sport);
                 return;
             }
-            
+
             if (resources.Count == 0)
             {
                 _logger.DebugFormat("There are currently no fixtures for sport={0} in UDAPI", sport);
                 return;
             }
-            
+
             var processingFactor = resources.Count / 10;
 
             _logger.DebugFormat("Received count={0} fixtures to process in sport={1}", resources.Count, sport);
@@ -357,10 +360,10 @@ namespace SS.Integration.Adapter
                         _logger.Error(string.Format("An error occured while processing {0} for sport={1}", resource, sport), ex);
                     }
                 });
-            
+
 
             RemoveDeletedFixtures(sport, resources);
-            
+
             _logger.InfoFormat("Finished processing fixtures for sport={0}", sport);
         }
 
@@ -370,12 +373,12 @@ namespace SS.Integration.Adapter
             var allFixturesForSport = EventState.GetFixtures(sport);
 
             var deletedFixtures = allFixturesForSport.Where(fixtureId => !currentfixturesLookup.ContainsKey(fixtureId));
-            
+
             foreach (var deletedFixtureId in deletedFixtures)
             {
                 _logger.DebugFormat("Fixture with fixtureId={0} was deleted from Connect fixture factory", deletedFixtureId);
                 RemoveAndStopListener(deletedFixtureId);
-                EventState.RemoveFixture(sport,deletedFixtureId);
+                EventState.RemoveFixture(sport, deletedFixtureId);
             }
         }
 
@@ -383,7 +386,7 @@ namespace SS.Integration.Adapter
         {
             _logger.DebugFormat("Attempt to process {0} for sport={1}", resource, sport);
 
-            if(!CanProcessResource(resource))
+            if (!CanProcessResource(resource))
                 return;
 
             _logger.InfoFormat("Processing {0}", resource);
@@ -452,7 +455,7 @@ namespace SS.Integration.Adapter
 
                         if (!listener.Start())
                         {
-                            _logger.WarnFormat("Couldn't start stream listener for {0}",resource);
+                            _logger.WarnFormat("Couldn't start stream listener for {0}", resource);
                             continue;
                         }
 
@@ -494,7 +497,7 @@ namespace SS.Integration.Adapter
         private bool RemoveAndStopListener(string fixtureId)
         {
             _logger.InfoFormat("Removing listener for fixtureId={0}", fixtureId);
-            
+
             IListener listener = null;
             _listeners.TryRemove(fixtureId, out listener);
 
@@ -532,7 +535,7 @@ namespace SS.Integration.Adapter
                 }
 
                 _logger.InfoFormat("{0} is over. Listener will be removed", resource);
-                
+
                 if (RemoveAndStopListener(resource.Id))
                 {
                     EventState.RemoveFixture(sport, resource.Id);
