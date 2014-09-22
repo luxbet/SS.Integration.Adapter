@@ -67,6 +67,11 @@ namespace SS.Integration.Adapter.Plugin.Logger
             _Logger.Info("Request for disposing Logger plugin received");
         }
 
+        public void EchoReceived(string id, string name)
+        {
+            _Logger.InfoFormat("Echo received for fixture with id={0} and name={1}", id, name);
+        }
+
         public IEnumerable<IMarketRule> MarketRules
         {
             get { return new List<IMarketRule>(); }

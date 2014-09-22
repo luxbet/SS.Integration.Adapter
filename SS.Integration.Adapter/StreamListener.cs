@@ -302,6 +302,7 @@ namespace SS.Integration.Adapter
                 _resource.StreamConnected -= ResourceOnStreamConnected;
                 _resource.StreamDisconnected -= ResourceOnStreamDisconnected;
                 _resource.StreamEvent -= ResourceOnStreamEvent;
+                _resource.EchoReceived -= ResourceOnEchoReceived;
 
                 IsStreaming = false;
                 IsConnecting = false;
@@ -354,6 +355,7 @@ namespace SS.Integration.Adapter
             _resource.StreamConnected += ResourceOnStreamConnected;
             _resource.StreamDisconnected += ResourceOnStreamDisconnected;
             _resource.StreamEvent += ResourceOnStreamEvent;
+            _resource.EchoReceived += ResourceOnEchoReceived;
         }
 
         private void StartStreaming()
@@ -654,6 +656,11 @@ namespace SS.Integration.Adapter
             {
                 _logger.ErrorFormat("Listener errored when executing OnStreamConnected: {0}", ex);
             }
+        }
+
+        internal void ResourceOnEchoReceived(object sender, EchoReceivedArgs echoReceivedArgs)
+        {
+            _platformConnector.EchoReceived(echoReceivedArgs.Id, echoReceivedArgs.Name);
         }
 
         private bool IsSequenceValid(Fixture fixtureDelta)
