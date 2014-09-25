@@ -230,6 +230,20 @@ namespace SS.Integration.Adapter.UdapiClient
             }
         }
 
+        public event EventHandler<EchoReceivedArgs> EchoReceived
+        {
+            add
+            {
+                if (_udapiResource != null)
+                    _udapiResource.EchoReceived += value;
+            }
+            remove
+            {
+                if (_udapiResource != null)
+                    _udapiResource.EchoReceived -= value;
+            }
+        }
+
 
         #region IStreamStatistics Implementation
 
