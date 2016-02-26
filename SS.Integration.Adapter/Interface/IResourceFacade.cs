@@ -41,6 +41,12 @@ namespace SS.Integration.Adapter.Interface
         event EventHandler<StreamEventArgs> StreamEvent;
 
         /// <summary>
+        /// This event is called everytime
+        /// a heartbeat echo is received
+        /// </summary>
+        event EventHandler<EchoReceivedArgs> EchoReceived;
+
+        /// <summary>
         /// The resource's Id
         /// </summary>
         string Id { get; }

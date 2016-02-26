@@ -32,6 +32,7 @@ namespace SS.Integration.Adapter.Configuration
         private const int DEFAULT_CACHE_EXPIRY_MINUTES_VALUE = 15;
         private const bool DEFAULT_ENABLE_DELTA_RULE = false;
         private const bool DEFAULT_USE_STATS = false;
+        private const string[] DEFAULT_SPORTS = null;
         private const bool DEFAULT_USE_SUPERVISOR = false;
         private const int DEFAULT_PROCESSING_LOCK_TIMEOUT = 720;
         private const string DEFAULT_STOP_STREAMING_DELAYED_SPORTS = "";
@@ -81,6 +82,9 @@ namespace SS.Integration.Adapter.Configuration
 
             value = ConfigurationManager.AppSettings["statsEnabled"];
             StatsEnabled = string.IsNullOrEmpty(value) ? DEFAULT_USE_STATS : Convert.ToBoolean(value);
+
+            value = ConfigurationManager.AppSettings["sports"];
+            Sports = string.IsNullOrEmpty(value) ? DEFAULT_SPORTS : Convert.ToString(value).Split(',');
 
             value = ConfigurationManager.AppSettings["useSupervisor"];
             UseSupervisor = string.IsNullOrEmpty(value) ? DEFAULT_USE_SUPERVISOR : Convert.ToBoolean(value);
@@ -137,6 +141,8 @@ namespace SS.Integration.Adapter.Configuration
         public int FixtureCreationConcurrency { get; private set; }
         
         public bool StatsEnabled { get; private set; }
+
+        public string[] Sports { get; set; }
 
         public string StateProviderPath { get; private set; }
         
