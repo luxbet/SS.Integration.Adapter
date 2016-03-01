@@ -98,7 +98,7 @@ namespace SS.Integration.Adapter.Interface
         /// Returns the expiration time
         /// (in minutes) for the adapter's cache
         /// </summary>
-        int CacheExpiryInMins { get;  }
+        int CacheExpiryInMins { get; }
 
         /// <summary>
         /// True to enable DeltaRule
@@ -161,5 +161,10 @@ namespace SS.Integration.Adapter.Interface
         /// <param name="sport"></param>
         /// <returns></returns>
         bool ShouldDelayStopStreaming(string sport);
+                
+        /// <summary>
+        /// What sports to process from UDAPI
+        /// </summary>
+        string[] Sports { get; }
     }
 }

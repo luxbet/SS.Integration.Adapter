@@ -340,6 +340,7 @@ namespace SS.Integration.Adapter
             _resource.StreamConnected -= ResourceOnStreamConnected;
             _resource.StreamDisconnected -= ResourceOnStreamDisconnected;
             _resource.StreamEvent -= ResourceOnStreamEvent;
+            _resource.EchoReceived -= ResourceOnEchoReceived;
 
             if (IsStreaming)
             {
@@ -397,6 +398,7 @@ namespace SS.Integration.Adapter
             _resource.StreamConnected += ResourceOnStreamConnected;
             _resource.StreamDisconnected += ResourceOnStreamDisconnected;
             _resource.StreamEvent += ResourceOnStreamEvent;
+            _resource.EchoReceived += ResourceOnEchoReceived;
         }
 
         private void StartStreaming()
@@ -761,6 +763,11 @@ namespace SS.Integration.Adapter
                 _logger.Error(string.Format("Error processing connected event for {0}", _resource), ex);
                 RaiseEvent(OnError, ex);
             }
+        }
+
+        internal void ResourceOnEchoReceived(object sender, EchoReceivedArgs echoReceivedArgs)
+        {
+            _platformConnector.EchoReceived(echoReceivedArgs.Id, echoReceivedArgs.Name);
         }
 
         private bool IsSequenceValid(Fixture fixtureDelta)

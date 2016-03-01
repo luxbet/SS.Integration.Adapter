@@ -22,7 +22,6 @@ using NUnit.Framework;
 using SportingSolutions.Udapi.Sdk.Extensions;
 using SS.Integration.Adapter.MarketRules.Model;
 using SS.Integration.Adapter.Model;
-using SS.Integration.Adapter.Model;
 using SS.Integration.Adapter.Model.ProcessState;
 
 namespace SS.Integration.Adapter.Tests

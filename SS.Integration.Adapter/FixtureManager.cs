@@ -3,12 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Resources;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using log4net;
-using log4net.Core;
-using SportingSolutions.Udapi.Sdk.Interfaces;
 using SS.Integration.Adapter.Interface;
 
 namespace SS.Integration.Adapter
