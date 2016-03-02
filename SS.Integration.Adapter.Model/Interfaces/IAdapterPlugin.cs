@@ -94,6 +94,15 @@ namespace SS.Integration.Adapter.Model.Interfaces
         void Dispose();
 
         /// <summary>
+        /// Called by the adapter when an echo
+        /// is received
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="name"></param>
+        void EchoReceived(string id, string name);
+
+
+        /// <summary>
         /// Defines a possibile empty set of
         /// plug-in specific market filtering rules
         /// </summary>

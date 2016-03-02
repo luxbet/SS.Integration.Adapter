@@ -229,5 +229,19 @@ namespace SS.Integration.Adapter.UdapiClient
                     _udapiResource.StreamEvent -= value;
             }
         }
+
+        public event EventHandler<EchoReceivedArgs> EchoReceived
+        {
+            add
+            {
+                if (_udapiResource != null)
+                    _udapiResource.EchoReceived += value;
+            }
+            remove
+            {
+                if (_udapiResource != null)
+                    _udapiResource.EchoReceived -= value;
+            }
+        }
     }
 }
