@@ -38,6 +38,7 @@ namespace SS.Integration.Adapter
         public delegate void StreamEventHandler(object sender, string fixtureId);
 
         private readonly static object _sync = new object();
+
         private readonly ILog _logger = LogManager.GetLogger(typeof(Adapter).ToString());
         
         private readonly List<string> _sports;
@@ -111,7 +112,10 @@ namespace SS.Integration.Adapter
 
                 foreach (var sport in UDAPIService.GetSports())
                 {
-                    _sports.Add(sport.Name);
+                    if (Settings.Sports == null || Array.IndexOf(Settings.Sports, sport.Name) > -1)
+                    {
+                        _sports.Add(sport.Name);
+                    }
                 }
 
                 _fixtureManager = new FixtureManager(Settings.FixtureCreationConcurrency, _listenersManager, UDAPIService.GetResources);
